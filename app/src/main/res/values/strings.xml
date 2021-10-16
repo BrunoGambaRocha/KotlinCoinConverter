@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Kotlin Coin Converter</string>
+	<string name="til_value_hint">Valor</string>
+	<string name="til_from_hint">Converter de:</string>
+	<string name="til_to_hint">Para:</string>
+	<string name="btn_converter_txt">Converter</string>
 </resources>
