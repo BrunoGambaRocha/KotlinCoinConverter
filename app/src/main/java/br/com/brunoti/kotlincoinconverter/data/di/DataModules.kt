@@ -16,6 +16,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object DataModules {
+
 	private const val HTTP_TAG = "OhHttp"
 
 	fun load() {

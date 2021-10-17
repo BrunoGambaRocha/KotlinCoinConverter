@@ -1,5 +1,6 @@
 package br.com.brunoti.kotlincoinconverter.presentation.di
 
+import br.com.brunoti.kotlincoinconverter.presentation.HistoryViewModel
 import br.com.brunoti.kotlincoinconverter.presentation.MainViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.loadKoinModules
@@ -14,7 +15,8 @@ object PresentationModule {
 
 	private fun viewModelModules(): Module {
 		return module {
-			viewModel { MainViewModel(get()) }
+			viewModel { HistoryViewModel(get()) }
+			viewModel { MainViewModel(get(), get()) }
 		}
 	}
 }
