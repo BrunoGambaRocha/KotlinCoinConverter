@@ -1,13 +1,22 @@
-package br.com.brunoti.kotlincoinconverter.ui
+package br.com.brunoti.kotlincoinconverter.ui.main
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
-import br.com.brunoti.kotlincoinconverter.core.extensions.*
+import br.com.brunoti.kotlincoinconverter.R
+import br.com.brunoti.kotlincoinconverter.core.extensions.createDialog
+import br.com.brunoti.kotlincoinconverter.core.extensions.createProgressDialog
+import br.com.brunoti.kotlincoinconverter.core.extensions.formatCurrency
+import br.com.brunoti.kotlincoinconverter.core.extensions.hideSoftKeyboard
+import br.com.brunoti.kotlincoinconverter.core.extensions.text
 import br.com.brunoti.kotlincoinconverter.data.model.Coin
 import br.com.brunoti.kotlincoinconverter.databinding.ActivityMainBinding
 import br.com.brunoti.kotlincoinconverter.presentation.MainViewModel
+import br.com.brunoti.kotlincoinconverter.ui.history.HistoryActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
@@ -20,10 +29,23 @@ class MainActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContentView(binding.root)
+		setSupportActionBar(binding.toolbar)
 
 		bindAdapters()
 		bindListeners()
 		bindObserve()
+	}
+
+	override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+		menuInflater.inflate(R.menu.main_menu, menu)
+		return super.onCreateOptionsMenu(menu)
+	}
+
+	override fun onOptionsItemSelected(item: MenuItem): Boolean {
+		if (item.itemId == R.id.action_history) {
+			startActivity(Intent(this, HistoryActivity::class.java))
+		}
+		return super.onOptionsItemSelected(item)
 	}
 
 	private fun bindAdapters() {
@@ -40,6 +62,7 @@ class MainActivity : AppCompatActivity() {
 	private fun bindListeners() {
 		binding.tilValue.editText?.doAfterTextChanged {
 			binding.btnConverter.isEnabled = it != null && it.toString().isNotEmpty()
+			binding.btnSave.isEnabled = false
 		}
 
 		binding.btnConverter.setOnClickListener {
@@ -48,6 +71,14 @@ class MainActivity : AppCompatActivity() {
 			val search = "${binding.tilFrom.text}-${binding.tilTo.text}"
 
 			viewModel.getExchangeValue(search)
+		}
+
+		binding.btnSave.setOnClickListener {
+			val value = viewModel.state.value
+			(value as? MainViewModel.State.Success)?.let {
+				val exchange = it.exchange.copy(bid = it.exchange.bid * binding.tilValue.text.toDouble())
+				viewModel.saveExchange(exchange)
+			}
 		}
 	}
 
@@ -62,15 +93,22 @@ class MainActivity : AppCompatActivity() {
 					}.show()
 				}
 				is MainViewModel.State.Success -> success(it)
+				MainViewModel.State.Saved -> {
+					dialog.dismiss()
+					createDialog {
+						setMessage("item salvo com sucesso!")
+					}.show()
+				}
 			}
 		}
 	}
 
 	private fun success(it: MainViewModel.State.Success) {
 		dialog.dismiss()
+		binding.btnSave.isEnabled = true
 
 		val selectedCoin = binding.tilTo.text
-		val coin = Coin.values().find { it.name == selectedCoin } ?: Coin.BRL
+		val coin = Coin.getByName(selectedCoin)
 
 		val result = it.exchange.bid * binding.tilValue.text.toDouble()
 
